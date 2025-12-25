@@ -2,57 +2,88 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Star Treasure: Multi-Algo Predictor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Treasure Mobile AI</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0a0e17; color: #fff; display: flex; justify-content: center; padding: 20px; }
-        .container { background: #1a1f2c; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); width: 100%; max-width: 450px; border: 1px solid #333; }
-        .header { text-align: center; margin-bottom: 15px; }
+        :root { --up-color: #ff0055; --low-color: #00d4ff; --bg: #0a0e17; --card: #1a1f2c; }
         
-        /* Prediction Panels */
-        .algo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .algo-card { background: #111; padding: 10px; border-radius: 8px; border-top: 3px solid #444; text-align: center; }
-        .algo-card.active { border-top-color: #4ecca3; }
-        .algo-name { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
-        .algo-res { font-size: 18px; font-weight: bold; letter-spacing: 2px; }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: var(--bg); color: #fff; margin: 0; padding: 10px;
+            display: flex; flex-direction: column; align-items: center;
+        }
 
-        .main-prediction { background: #000; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 2px solid #ff0055; box-shadow: 0 0 15px rgba(255, 0, 85, 0.2); }
-        .main-res { font-size: 32px; font-weight: bold; color: #4ecca3; letter-spacing: 5px; }
+        .container { width: 100%; max-width: 480px; box-sizing: border-box; }
 
-        /* Color Groups */
-        .up-t { color: #ff0055; } /* 2,3,4,7 */
-        .low-t { color: #00d4ff; } /* 1,5,6,8 */
+        /* Main Prediction Header */
+        .main-prediction { 
+            background: #000; padding: 15px; border-radius: 12px; 
+            text-align: center; border: 2px solid var(--up-color); 
+            position: sticky; top: 0; z-index: 100; margin-bottom: 15px;
+        }
+        .main-res { font-size: 36px; font-weight: bold; letter-spacing: 8px; margin-top: 5px; }
 
-        /* Buttons */
-        .input-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        button.num-btn { padding: 15px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; color: white; font-weight: bold; }
+        /* Multi-Algo Grid */
+        .algo-grid { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; 
+        }
+        .algo-card { 
+            background: var(--card); padding: 8px; border-radius: 8px; 
+            text-align: center; font-size: 13px; border-bottom: 2px solid #333;
+        }
+        .algo-res { font-weight: bold; font-size: 16px; margin-top: 4px; }
+
+        /* Mobile Button Grid */
+        .input-grid { 
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; 
+            margin-bottom: 20px;
+        }
+        .num-btn { 
+            aspect-ratio: 1 / 1; font-size: 22px; border: none; border-radius: 12px; 
+            color: white; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+        }
+        .num-btn:active { transform: translateY(3px); box-shadow: none; }
+
+        /* Specific Button Colors */
         .btn-up1 { background: #c60606; } .btn-up2 { background: #d06363; }
         .btn-up3 { background: #5b5d04; } .btn-up4 { background: #7b0404; }
         .btn-low1 { background: #a22394; } .btn-low2 { background: #e5d422; }
         .btn-low3 { background: #75e47e; } .btn-low4 { background: #04450e; }
 
-        #historyInput { width: 100%; height: 60px; background: #000; color: #aaa; border: 1px solid #333; margin-top: 15px; border-radius: 5px; font-size: 12px; padding: 5px; box-sizing: border-box; }
-        .btn-save { width: 100%; padding: 10px; background: #4ecca3; border: none; font-weight: bold; margin-top: 5px; cursor: pointer; border-radius: 5px; }
+        /* Auto-Expanding History Box */
+        .history-section { background: var(--card); padding: 15px; border-radius: 12px; }
+        #historyInput { 
+            width: 100%; min-height: 60px; max-height: 250px;
+            background: #000; color: #4ecca3; border: 1px solid #444; 
+            border-radius: 8px; padding: 10px; font-family: monospace; 
+            font-size: 16px; box-sizing: border-box; resize: none;
+            overflow-y: hidden; /* Controlled by JS for auto-resize */
+        }
+
+        .up-t { color: var(--up-color); }
+        .low-t { color: var(--low-color); }
+        
+        .footer-btns { margin-top: 10px; display: flex; gap: 10px; }
+        .action-btn { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-update { background: #4ecca3; color: #000; }
+        .btn-reset { background: #333; color: #888; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <h2 style="margin:0; color:#ff0055;">STAR TREASURE AI</h2>
-        <small style="color:#666;">Synchronized 4-Algorithm Analysis</small>
-    </div>
-
     <div class="main-prediction">
-        <div style="font-size: 11px; color: #888;">AI CONSENSUS (NEXT 4)</div>
+        <div style="font-size: 11px; color: #888;">AI CONSENSUS NEXT 4</div>
         <div class="main-res" id="mainRes">---</div>
     </div>
 
     <div class="algo-grid">
-        <div class="algo-card"><div class="algo-name">Markov (Pattern)</div><div class="algo-res" id="res1">- - - -</div></div>
-        <div class="algo-card"><div class="algo-name">LCG (Math)</div><div class="algo-res" id="res2">- - - -</div></div>
-        <div class="algo-card"><div class="algo-name">Group Drift</div><div class="algo-res" id="res3">- - - -</div></div>
-        <div class="algo-card"><div class="algo-name">Frequency</div><div class="algo-res" id="res4">- - - -</div></div>
+        <div class="algo-card"><div style="color:#666; font-size:9px;">MARKOV</div><div class="algo-res" id="res1">- - - -</div></div>
+        <div class="algo-card"><div style="color:#666; font-size:9px;">MATH/LCG</div><div class="algo-res" id="res2">- - - -</div></div>
+        <div class="algo-card"><div style="color:#666; font-size:9px;">DRIFT</div><div class="algo-res" id="res3">- - - -</div></div>
+        <div class="algo-card"><div style="color:#666; font-size:9px;">HOT/FREQ</div><div class="algo-res" id="res4">- - - -</div></div>
     </div>
 
     <div class="input-grid">
@@ -66,13 +97,32 @@
         <button class="num-btn btn-low4" onclick="addNum(8)">8</button>
     </div>
 
-    <textarea id="historyInput" placeholder="History logic..."></textarea>
-    <button class="btn-save" onclick="saveHistory()">UPDATE PATTERNS</button>
+    <div class="history-section">
+        <label style="font-size: 11px; color: #888; display: block; margin-bottom: 8px;">HISTORY DATA (AUTO-EXPAND):</label>
+        <textarea id="historyInput" onfocus="handleFocus(this)" oninput="autoExpand(this)"></textarea>
+        <div class="footer-btns">
+            <button class="action-btn btn-update" onclick="saveHistory()">UPDATE PATTERNS</button>
+            <button class="action-btn btn-reset" onclick="resetApp()">RESET</button>
+        </div>
+    </div>
 </div>
 
 <script>
     const upGroup = [2, 3, 4, 7];
     let history = [1,8,8,5,5,6,8,6,1,8,6,6,4,2,4,5,5,8,6,8,5,5,4,1,5,8,2,6,6,6,6,5,6,5,5,1,6,8,8,4,6,5,1,8,5,5,1,6,8,1,6,6,5,2,3,8,1,8,4,6,8,2,5,8,6,2,8,8,8,1,6,4,8,5,6,8,6,4,5,1,6,6,5,5,4,1,5];
+
+    // Mobile Auto-Expand Function
+    function autoExpand(textarea) {
+        textarea.style.height = 'inherit';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
+    // Auto-Scroll when keyboard opens
+    function handleFocus(textarea) {
+        setTimeout(() => {
+            textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+    }
 
     function addNum(n) {
         history.push(n);
@@ -80,13 +130,21 @@
     }
 
     function saveHistory() {
-        history = document.getElementById('historyInput').value.split(/[^\d]+/).filter(x => x).map(Number);
+        const val = document.getElementById('historyInput').value;
+        history = val.split(/[^\d]+/).filter(x => x).map(Number);
         runAll();
     }
 
+    function resetApp() {
+        if(confirm("Clear all?")) { history = []; runAll(); }
+    }
+
     function runAll() {
-        document.getElementById('historyInput').value = history.join(", ");
-        if (history.length < 5) return;
+        const input = document.getElementById('historyInput');
+        input.value = history.join(", ");
+        autoExpand(input);
+
+        if (history.length < 3) return;
 
         const p1 = algoMarkov();
         const p2 = algoLCG();
@@ -98,7 +156,6 @@
         displayAlgo('res3', p3);
         displayAlgo('res4', p4);
 
-        // Consensus: Pick most common for each step
         let final = [];
         for(let i=0; i<4; i++) {
             let votes = [p1[i], p2[i], p3[i], p4[i]];
@@ -110,7 +167,7 @@
         document.getElementById('mainRes').innerHTML = html;
     }
 
-    // 1. Markov Chain (Contextual Pattern)
+    // --- ALGORITHMS ---
     function algoMarkov() {
         let patterns = {};
         for (let i = 0; i < history.length - 2; i++) {
@@ -121,45 +178,37 @@
         let res = [], cur = [...history];
         for(let i=0; i<4; i++) {
             let k = cur.slice(-2).join("-");
-            let n = patterns[k] ? patterns[k].sort((a,b) => patterns[k].filter(v=>v===a).length - patterns[k].filter(v=>v===b).length).pop() : (cur[cur.length-1]);
-            res.push(n); cur.push(n);
+            let next = patterns[k] ? patterns[k].sort((a,b) => patterns[k].filter(v=>v===a).length - patterns[k].filter(v=>v===b).length).pop() : (cur[cur.length-1]);
+            res.push(next); cur.push(next);
         }
         return res;
     }
 
-    // 2. Linear Congruential (Mathematical Step)
     function algoLCG() {
-        let diffs = [];
-        for(let i=0; i<history.length-1; i++) diffs.push((history[i+1] - history[i] + 8) % 8);
-        let lastDiff = diffs[diffs.length-1];
+        let step = (history[history.length-1] - history[history.length-2] + 8) % 8;
         let res = [], cur = history[history.length-1];
-        for(let i=0; i<4; i++) {
-            cur = ((cur + lastDiff - 1) % 8) + 1;
-            res.push(cur);
-        }
+        for(let i=0; i<4; i++) { cur = ((cur + step - 1) % 8) + 1; res.push(cur); }
         return res;
     }
 
-    // 3. Group Drift (UP vs LOW Logic)
     function algoDrift() {
-        let lastGroup = upGroup.includes(history[history.length-1]);
-        let res = [];
-        for(let i=0; i<4; i++) res.push(lastGroup ? (upGroup[i%4]) : ([1,5,6,8][i%4]));
-        return res;
+        let isUp = upGroup.includes(history[history.length-1]);
+        return isUp ? [7,2,4,3] : [6,8,5,1];
     }
 
-    // 4. Frequency (Weighted Random)
     function algoFreq() {
         let counts = {};
-        history.slice(-20).forEach(x => counts[x] = (counts[x] || 0) + 1);
+        history.slice(-15).forEach(x => counts[x] = (counts[x] || 0) + 1);
         let top = Object.keys(counts).sort((a,b) => counts[b] - counts[a]);
-        return [parseInt(top[0]), parseInt(top[1] || top[0]), parseInt(top[0]), parseInt(top[2] || top[0])];
+        let r = parseInt(top[0] || 8);
+        return [r, r, r, r];
     }
 
     function displayAlgo(id, arr) {
         document.getElementById(id).innerHTML = arr.map(n => `<span class="${upGroup.includes(n)?'up-t':'low-t'}">${n}</span>`).join(" ");
     }
 
+    // Initial Start
     runAll();
 </script>
 </body>
